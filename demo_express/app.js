@@ -8,11 +8,12 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 var passport = require('passport');
 var authenticate = require('./authenticate');
+var config = require('./config')
 
 // const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const Dishes = require('./models/dishes');
-const url = 'mongodb://172.17.0.2:27017/test';
+const url = config.mongoUrl;
 const dbname = 'conFusion';
 const connect = mongoose.connect(url);
 
@@ -42,6 +43,15 @@ var dishRouter = require('./routes/dishRouter');
 
 var app = express();
 
+app.all('*', (req, res, next) => {
+  if (req.secure) {
+    return next();
+  }
+  else {
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort') + req.url);
+  }
+})
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -62,20 +72,20 @@ app.use(session({
 }))
 
 
-function auth (req, res, next) {
-  console.log(req.user);
+// function auth (req, res, next) {
+//   console.log(req.user);
 
-  if (!req.user) {
-    var err = new Error('You are not authenticated!');
-    err.status = 403;
-    next(err);
-  }
-  else {
-        next();
-  }
-}
+//   if (!req.user) {
+//     var err = new Error('You are not authenticated!');
+//     err.status = 403;
+//     next(err);
+//   }
+//   else {
+//         next();
+//   }
+// }
 
-app.use(auth);
+// app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
